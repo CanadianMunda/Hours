@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Hours Calculator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 1rem;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .tabs-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-trigger {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+
+        .tab-trigger.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            min-height: 100px;
+            margin: 0.5rem 0;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(16px);
+        }
+
+        .total-hours {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="card-title">Work Hours Calculator</h2>
+        <div class="content">
+            <div class="switch-container">
+                <label class="switch">
+                    <input type="checkbox" id="breakSwitch">
+                    <span class="slider"></span>
+                </label>
+                <label for="breakSwitch">Deduct 30-minute break per shift</label>
+            </div>
+
+            <div class="tabs">
+                <div class="tabs-list">
+                    <button class="tab-trigger active" data-tab="format1">Hours & Minutes Format</button>
+                    <button class="tab-trigger" data-tab="format2">Time Range Format</button>
+                </div>
+
+                <div id="format1" class="tab-content active">
+                    <label>Enter shifts (e.g., "5H 48M 5H 48M 5H 48M")</label>
+                    <textarea id="hoursInput" placeholder="5H 48M 5H 48M 5H 48M"></textarea>
+                    <button onclick="calculateHoursMinutes()">Calculate Hours</button>
+                </div>
+
+                <div id="format2" class="tab-content">
+                    <label>Enter time ranges (e.g., "11am to 5pm, 6pm to 11pm")</label>
+                    <textarea id="timeRangeInput" placeholder="11am to 5pm, 6pm to 11pm"></textarea>
+                    <div class="note">Supports flexible formats like: "11am", "11:00am", "11:00 am", "11 am", "2pm to 5pm"</div>
+                    <button onclick="calculateTimeRange()">Calculate Hours</button>
+                </div>
+            </div>
+
+            <div class="total-hours">
+                <h3>Total Hours: <span id="totalHours">0.00</span></h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deductBreak = false;
+        
+        // Tab handling
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const tabId = trigger.dataset.tab;
+                document.querySelectorAll('.tab-trigger, .tab-content').forEach(el => {
+                    el.classList.remove('active');
+                });
+                trigger.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Break switch handling
+        document.getElementById('breakSwitch').addEventListener('change', (e) => {
+            deductBreak = e.target.checked;
+        });
+
+        function normalizeTimeString(timeStr) {
+            timeStr = timeStr.toLowerCase().trim();
+            const timePattern = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/;
+            const match = timeStr.match(timePattern);
+            
+            if (match) {
+                let hour = parseInt(match[1]);
+                const minute = match[2] ? parseInt(match[2]) : 0;
+                let period = match[3];
+
+                if (!period) {
+                    if (hour === 12 || (hour < 7 && hour !== 0)) {
+                        period = 'pm';
+                    } else {
+                        period = 'am';
+                    }
+                }
+
+                if (period === 'pm' && hour !== 12) hour += 12;
+                if (period === 'am' && hour === 12) hour = 0;
+
+                return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            }
+            return timeStr;
+        }
+
+        function parseHoursMinutes(input) {
+            const shifts = input.trim().split(/\s+/);
+            let total = 0;
+
+            shifts.forEach(shift => {
+                const match = shift.match(/(\d+)H\s*(\d+)M/i);
+                if (match) {
+                    const hours = parseInt(match[1]);
+                    const minutes = parseInt(match[2]);
+                    total += hours + (minutes / 60);
+                }
+            });
+
+            if (deductBreak) {
+                total -= (shifts.length * 0.5);
+            }
+
+            return Math.max(0, total);
+        }
+
+        function parseTimeRange(input) {
+            if (!input.trim()) return 0;
+            const ranges = input.split(',').map(range => range.trim());
+            let total = 0;
+
+            ranges.forEach(range => {
+                const times = range.split(/(?:\s+to\s+|\s+-\s+|\s{2,})/);
+                if (times.length >= 2) {
+                    const startStr = normalizeTimeString(times[0]);
+                    const endStr = normalizeTimeString(times[1]);
+
+                    if (startStr && endStr) {
+                        const startDate = new Date(`2000/01/01 ${startStr}`);
+                        const endDate = new Date(`2000/01/01 ${endStr}`);
+                        let diff = (endDate - startDate) / (1000 * 60 * 60);
+                        if (diff < 0) diff += 24;
+                        total += diff;
+                    }
+                }
+            });
+
+            if (deductBreak) {
+                total -= (ranges.length * 0.5);
+            }
+
+            return Math.max(0, total);
+        }
+
+        function calculateHoursMinutes() {
+            const input = document.getElementById('hoursInput').value;
+            const total = parseHoursMinutes(input);
+            document.getElementById('totalHours').textContent = total.toFixed(2);
+        }
+
+        function calculateTimeRange() {
+            const input = document.getElementById('timeRangeInput').value;
+            const total = parseTimeRange(input);
+            document.getElementById('totalHours').textContent = total.toFixed(2);
+        }
+    </script>
+</body>
+</html>
