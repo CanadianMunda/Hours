@@ -12,33 +12,45 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f4f4f9;
         }
         .dashboard {
             display: flex;
+            flex-wrap: wrap;
             gap: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
         }
         .section {
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 300px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+            flex: 1;
         }
         h2 {
             margin-top: 0;
+            font-size: 1.5em;
         }
         label {
             display: block;
             margin: 10px 0 5px;
+            font-weight: bold;
         }
         input[type="number"], input[type="text"] {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
         }
         button {
             background-color: #007BFF;
@@ -48,12 +60,23 @@
             padding: 10px;
             cursor: pointer;
             width: 100%;
+            font-size: 1em;
+            box-sizing: border-box;
         }
         button:hover {
             background-color: #0056b3;
         }
         p {
             font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+                align-items: center;
+            }
+            .section {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
