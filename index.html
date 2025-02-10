@@ -144,7 +144,7 @@
                     if (startPeriod === 'am' && startHours === 12) startHours = 0;
 
                     if (endPeriod === 'pm' && endHours !== 12) endHours += 12;
-                    if (endPeriod === 'am' && endHours === 12) endHours = 0;
+                    if (endPeriod === 'am' && endHours === 12) endHours = 24;
 
                     const startTotalMinutes = startHours * 60 + startMinutes;
                     const endTotalMinutes = endHours * 60 + endMinutes;
